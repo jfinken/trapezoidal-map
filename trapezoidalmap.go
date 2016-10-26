@@ -66,30 +66,127 @@ func ConstructMap(width, height int, segments []*Segment) {
 			subTree.Type = XNode
 
 			// set left sub-tree and interlink it with the trapezoid
-			subTree.Left = &Node{T: A, Type: Leaf}
-			subTree.Left.Parent = subTree
-			A.Node = subTree
+			subTree.setLeftTree(A)
+
 			// set right sub-tree
-			subTree.setRightTree(seg.Q, B, seg, C, D)
+			subTree.setRightTreeToPoint(seg.Q, B, seg, C, D)
 		} else {
-			// newTrapezoids :=
-			// prevUpper :=
-			// prevLower :=
+			newTrapezoids := []*Trapezoid{}
+			var prevUpper *Trapezoid
+			var prevLower *Trapezoid
 
 			// much more complicated case: seg intersects two or more trapezoids.
 			for i := 0; i < len(intersectedTraps); i++ {
 				d := intersectedTraps[i]
+				trapMap = removeTrap(trapMap, i)
 
 				if i == 0 {
-					trapMap = removeTrap(trapMap, i)
 					A := &Trapezoid{Top: d.Top, Bottom: d.Bottom, Leftp: d.Leftp, Rightp: seg.P}
 					B := &Trapezoid{Top: d.Top, Bottom: seg, Leftp: seg.P, Rightp: d.Rightp}
 					C := &Trapezoid{Top: seg, Bottom: d.Bottom, Leftp: seg.P, Rightp: d.Rightp}
 					A.setNeighbors(d.UpperLeft, d.LowerLeft, B, C)
 					B.setNeighbors(A, A, nil, nil)
 					C.setNeighbors(A, A, nil, nil)
+
+					if d.UpperLeft != nil {
+						d.UpperLeft.UpperRight = A
+						d.UpperLeft.LowerRight = A
+					}
+					if d.LowerLeft != nil {
+						d.LowerLeft.LowerRight = A
+						d.LowerLeft.UpperRight = A
+					}
+
+					trapMap = append(trapMap, A)
+					newTrapezoids = append(newTrapezoids, B, C)
+					prevUpper = B
+					prevLower = C
+
+					// update the tree D by replacing the leaf for d by a little
+					// tree with four leaves.
+					subTree := d.Node
+					subTree.P = seg.P
+					subTree.Type = XNode
+
+					// set left sub-tree and interlink it with the trapezoid
+					subTree.setLeftTree(A)
+
+					// set right sub-tree
+					subTree.setRightTreeToSeg(seg, B, C)
+
+					// for each trapezoid in the map, check trap's neighbors
+					assertNeighbors(trapMap)
+
+				} else if i == len(intersectedTraps)-1 {
+					B := &Trapezoid{Top: d.Top, Bottom: seg, Leftp: d.Leftp, Rightp: seg.Q}
+					C := &Trapezoid{Top: seg, Bottom: d.Bottom, Leftp: d.Leftp, Rightp: seg.Q}
+					A := &Trapezoid{Top: d.Top, Bottom: d.Bottom, Leftp: seg.Q, Rightp: d.Rightp}
+					B.setNeighbors(prevUpper, prevUpper, A, A)
+					C.setNeighbors(prevLower, prevLower, A, A)
+					A.setNeighbors(B, C, d.UpperRight, d.LowerRight)
+
+					prevUpper.UpperRight = B
+					prevUpper.LowerRight = B
+					prevLower.UpperRight = C
+					prevLower.LowerRight = C
+
+					if d.UpperRight != nil {
+						d.UpperRight.UpperLeft = A
+						d.UpperRight.LowerLeft = A
+					}
+					if d.LowerRight != nil {
+						d.LowerRight.LowerLeft = A
+						d.LowerRight.UpperLeft = A
+					}
+					trapMap = append(trapMap, A)
+					newTrapezoids = append(newTrapezoids, B, C)
+
+					// update the tree D by replacing the leaf for d by a little
+					// tree with four leaves.
+					subTree := d.Node
+					subTree.P = seg.Q
+					subTree.Type = XNode
+
+					// set right sub-tree and interlink it with the trapezoid
+					subTree.setRightTree(A)
+
+					// set left sub-tree
+					subTree.setLeftTreeToSeg(seg, B, C)
+
+					// for each trapezoid in the map, check trap's neighbors
+					assertNeighbors(trapMap)
+				} else {
+
+					A := &Trapezoid{Top: d.Top, Bottom: seg, Leftp: d.Leftp, Rightp: d.Rightp}
+					B := &Trapezoid{Top: seg, Bottom: d.Bottom, Leftp: d.Leftp, Rightp: d.Rightp}
+					A.setNeighbors(prevUpper, prevUpper, nil, nil)
+					B.setNeighbors(prevLower, prevLower, nil, nil)
+
+					prevUpper.UpperRight = A
+					prevUpper.LowerRight = A
+					prevLower.UpperRight = B
+					prevLower.LowerRight = B
+
+					prevUpper = A
+					prevLower = B
+					newTrapezoids = append(newTrapezoids, A, B)
+					// update the tree D by replacing the leaf for d by a little
+					// tree with four leaves.
+					subTree := d.Node
+					subTree.S = seg
+					subTree.Type = YNode
+
+					// set left sub-tree and interlink it with the trapezoid
+					subTree.setLeftTree(A)
+
+					// set right sub-tree
+					subTree.setRightTree(B)
+
+					// for each trapezoid in the map, check trap's neighbors
+					assertNeighbors(trapMap)
 				}
 			}
+			//merged := false
 		}
 	}
 }
@@ -147,4 +244,28 @@ func random(max int) int {
 	src := rand.NewSource(time.Now().UnixNano())
 	rnd := rand.New(src)
 	return rnd.Intn(max)
+}
+func assertNeighbors(traps []*Trapezoid) {
+	for _, t := range traps {
+		if contains(traps, t.UpperLeft) == false {
+			t.UpperLeft = nil
+		}
+		if contains(traps, t.LowerLeft) == false {
+			t.LowerLeft = nil
+		}
+		if contains(traps, t.UpperRight) == false {
+			t.UpperRight = nil
+		}
+		if contains(traps, t.LowerRight) == false {
+			t.LowerRight = nil
+		}
+	}
+}
+func contains(traps []*Trapezoid, trap *Trapezoid) bool {
+	for _, t := range traps {
+		if t == trap {
+			return true
+		}
+	}
+	return false
 }

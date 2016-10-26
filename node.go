@@ -43,7 +43,19 @@ func (n *Node) traverse(p *Point) *Node {
 	}
 	return nil
 }
-func (n *Node) setRightTree(rightPt *Point, rightTrap *Trapezoid, leftSeg *Segment,
+func (n *Node) setRightTree(A *Trapezoid) {
+
+	n.Right = &Node{T: A, Type: Leaf}
+	n.Right.Parent = n
+	A.Node = n
+}
+func (n *Node) setLeftTree(A *Trapezoid) {
+
+	n.Left = &Node{T: A, Type: Leaf}
+	n.Left.Parent = n
+	A.Node = n
+}
+func (n *Node) setRightTreeToPoint(rightPt *Point, rightTrap *Trapezoid, leftSeg *Segment,
 	leftSubTrapLeft *Trapezoid, leftSubTrapRight *Trapezoid) {
 
 	// Ref: Figure 6.7, page 129 of http://www.cs.uu.nl/geobook/
@@ -53,4 +65,17 @@ func (n *Node) setRightTree(rightPt *Point, rightTrap *Trapezoid, leftSeg *Segme
 	n.Right.Left = &Node{S: leftSeg, Parent: n.Right, Type: YNode}
 	n.Right.Left.Left = &Node{T: leftSubTrapLeft, Parent: n.Right.Left, Type: Leaf}
 	n.Right.Left.Right = &Node{T: leftSubTrapRight, Parent: n.Right.Left, Type: Leaf}
+}
+func (n *Node) setRightTreeToSeg(seg *Segment, leftTrap *Trapezoid, rightTrap *Trapezoid) {
+
+	n.Right = &Node{S: seg, Parent: n, Type: YNode}
+	n.Right.Left = &Node{T: leftTrap, Parent: n.Right, Type: Leaf}
+	n.Right.Right = &Node{T: rightTrap, Parent: n.Right, Type: Leaf}
+}
+
+func (n *Node) setLeftTreeToSeg(seg *Segment, leftTrap *Trapezoid, rightTrap *Trapezoid) {
+
+	n.Left = &Node{S: seg, Parent: n, Type: YNode}
+	n.Left.Left = &Node{T: leftTrap, Parent: n.Right, Type: Leaf}
+	n.Left.Right = &Node{T: rightTrap, Parent: n.Right, Type: Leaf}
 }
