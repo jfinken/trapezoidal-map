@@ -43,6 +43,15 @@ func (n *Node) traverse(p *Point) *Node {
 	}
 	return nil
 }
+func (n *Node) isLeftNode(other *Node) bool {
+	if other == nil {
+		return (n.P == nil && n.S == nil && n.T == nil)
+	}
+	if n.Left.equals(other) {
+		return true
+	}
+	return false
+}
 func (n *Node) setRightTree(A *Trapezoid) {
 
 	n.Right = &Node{T: A, Type: Leaf}
@@ -78,4 +87,27 @@ func (n *Node) setLeftTreeToSeg(seg *Segment, leftTrap *Trapezoid, rightTrap *Tr
 	n.Left = &Node{S: seg, Parent: n, Type: YNode}
 	n.Left.Left = &Node{T: leftTrap, Parent: n.Right, Type: Leaf}
 	n.Left.Right = &Node{T: rightTrap, Parent: n.Right, Type: Leaf}
+}
+func (n *Node) equals(other *Node) bool {
+
+	if other == nil {
+		return false
+	}
+
+	if other == nil && n.P == nil && n.S == nil && n.T == nil {
+		return true
+	}
+	if n.P != nil && other.P != nil && !n.P.equals(other.P) {
+		return false
+	}
+	if n.S != nil && other.S != nil && !n.S.equals(other.S) {
+		return false
+	}
+	if n.T != nil && other.T != nil && !n.T.equals(other.T) {
+		return false
+	}
+	if n.Type != other.Type {
+		return false
+	}
+	return true
 }

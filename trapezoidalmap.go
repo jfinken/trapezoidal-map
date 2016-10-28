@@ -186,7 +186,7 @@ func ConstructMap(width, height int, segments []*Segment) {
 					assertNeighbors(trapMap)
 				}
 			}
-			//merged := false
+			mergeTrapezoids(newTrapezoids, seg)
 		}
 	}
 }
@@ -236,6 +236,37 @@ func followSegment(root *Node, seg *Segment) []*Trapezoid {
 		}
 	}
 	return traversed
+}
+
+func mergeTrapezoids(newTrapezoids []*Trapezoid, seg *Segment) {
+	merged := false
+	for !merged {
+		for i, t := range newTrapezoids {
+			if t.Rightp != nil && !t.Rightp.equals(seg.P) && !t.Rightp.equals(seg.Q) &&
+				((t.Top != nil && t.Top.Above(t.Rightp)) ||
+					(t.Bottom != nil && !t.Bottom.Above(t.Rightp))) {
+
+				next := t.UpperRight
+				nextI := i
+				t.UpperRight = next.UpperRight
+				t.LowerRight = next.LowerRight
+
+				if t.Top != nil && t.Top.Above(t.Rightp) {
+					t.UpperRight.LowerLeft = t
+				} else {
+					t.UpperRight.UpperLeft = t
+				}
+				t.Rightp = next.Rightp
+				// update the search structure
+				if next.Node.Parent.isLeftNode(next.Node) {
+					next.Node.Parent.Left = t.Node
+				} else {
+					next.Node.Parent.Right = t.Node
+				}
+				newTrapezoids = removeTrap(newTrapezoids, nextI)
+			}
+		}
+	}
 }
 
 // TrapezoidMap is a randomized incremental algorithm.  random here
