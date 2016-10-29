@@ -1,6 +1,7 @@
 package trapezoidalmap
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 )
@@ -8,7 +9,7 @@ import (
 // ConstructMap is the main entry point to construct a trapezoidal map
 // and its interlinked search data structure D.  Width and Height define
 // the over-arching bounding box R.
-func ConstructMap(width, height int, segments []*Segment) {
+func ConstructMap(width, height int, segments []*Segment) []*Trapezoid {
 
 	// start T and D with a nil trapezoid (R?)
 	t0 := &Trapezoid{}
@@ -78,6 +79,7 @@ func ConstructMap(width, height int, segments []*Segment) {
 			// much more complicated case: seg intersects two or more trapezoids.
 			for i := 0; i < len(intersectedTraps); i++ {
 				d := intersectedTraps[i]
+				//fmt.Printf("i: %d, len(intersectedTraps): %d\n", i, len(intersectedTraps))
 				trapMap = removeTrap(trapMap, i)
 
 				if i == 0 {
@@ -186,9 +188,15 @@ func ConstructMap(width, height int, segments []*Segment) {
 					assertNeighbors(trapMap)
 				}
 			}
-			mergeTrapezoids(newTrapezoids, seg)
+			newTrapezoids = mergeTrapezoids(newTrapezoids, seg)
+			// reset all
+			for _, t := range newTrapezoids {
+				t.Merged = false
+				trapMap = append(trapMap, t)
+			}
 		}
 	}
+	return trapMap
 }
 func removeSeg(segs []*Segment, index int) []*Segment {
 
@@ -200,6 +208,8 @@ func removeSeg(segs []*Segment, index int) []*Segment {
 
 // correct: no generics
 func removeTrap(traps []*Trapezoid, index int) []*Trapezoid {
+
+	fmt.Printf("foo: %d, len(traps): %d\n", index, len(traps))
 
 	copy(traps[index:], traps[index+1:])
 	// This is a slice of pointers, this allows GC
@@ -238,7 +248,7 @@ func followSegment(root *Node, seg *Segment) []*Trapezoid {
 	return traversed
 }
 
-func mergeTrapezoids(newTrapezoids []*Trapezoid, seg *Segment) {
+func mergeTrapezoids(newTrapezoids []*Trapezoid, seg *Segment) []*Trapezoid {
 	merged := false
 	for !merged {
 		for i, t := range newTrapezoids {
@@ -264,9 +274,20 @@ func mergeTrapezoids(newTrapezoids []*Trapezoid, seg *Segment) {
 					next.Node.Parent.Right = t.Node
 				}
 				newTrapezoids = removeTrap(newTrapezoids, nextI)
+				break
+			} else {
+				t.Merged = true
+			}
+		}
+		//?
+		merged = true
+		for _, t := range newTrapezoids {
+			if !t.Merged {
+				merged = false
 			}
 		}
 	}
+	return newTrapezoids
 }
 
 // TrapezoidMap is a randomized incremental algorithm.  random here

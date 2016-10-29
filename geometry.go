@@ -19,6 +19,8 @@ type Trapezoid struct {
 	LowerLeft  *Trapezoid
 	UpperRight *Trapezoid
 	LowerRight *Trapezoid
+
+	Merged bool
 }
 
 func (t *Trapezoid) equals(other *Trapezoid) bool {
