@@ -1,12 +1,20 @@
 package trapezoidalmap
 
+import (
+	"crypto/rand"
+	"fmt"
+	"io"
+	"log"
+)
+
 type Point struct {
 	X float64
 	Y float64
 }
 type Segment struct {
-	P *Point
-	Q *Point
+	P     *Point
+	Q     *Point
+	Index int
 }
 type Trapezoid struct {
 	Top    *Segment
@@ -20,22 +28,22 @@ type Trapezoid struct {
 	UpperRight *Trapezoid
 	LowerRight *Trapezoid
 
+	UUID   string
 	Merged bool
 }
 
 func (t *Trapezoid) equals(other *Trapezoid) bool {
+	if other == nil && t == nil {
+		return true
+	}
 	if other.isNil() && t.isNil() {
 		return true
 	}
-	// everything else: Segments, Points, Neighbors
-	return (t.Top != nil && t.Top.equals(other.Top)) &&
-		(t.Bottom != nil && t.Bottom.equals(other.Bottom)) &&
-		(t.Leftp != nil && t.Leftp.equals(other.Leftp)) &&
-		(t.Rightp != nil && t.Rightp.equals(other.Rightp)) &&
-		(t.UpperLeft.equals(other.UpperLeft)) &&
-		(t.UpperRight.equals(other.UpperRight)) &&
-		(t.LowerLeft.equals(other.LowerLeft)) &&
-		(t.LowerRight.equals(other.LowerRight))
+	if other.UUID == t.UUID {
+		return true
+	}
+
+	return false
 }
 
 // setNeighbors is a convenience function
@@ -64,9 +72,28 @@ func line(left, right, pt *Point) float64 {
 func (p *Point) equals(other *Point) bool {
 	return (p.X == other.X && p.Y == other.Y)
 }
+func (s *Segment) isNil() bool {
+	return (s.P == nil && s.Q == nil)
+}
 func (s *Segment) equals(other *Segment) bool {
 	return (s.P == other.P && s.Q == other.Q)
 }
 func (t *Trapezoid) isNil() bool {
 	return (t.Top == nil && t.Bottom == nil && t.Leftp == nil && t.Rightp == nil)
+}
+
+// newUUID generates a random UUID according to RFC 4122
+func newUUID() string {
+	uuid := make([]byte, 16)
+	n, err := io.ReadFull(rand.Reader, uuid)
+	if n != len(uuid) || err != nil {
+		// effectively swallow the error, not idiomatic
+		log.Printf("%s\n", err.Error())
+		return ""
+	}
+	// variant bits; see section 4.1.1
+	uuid[8] = uuid[8]&^0xc0 | 0x80
+	// version 4 (pseudo-random); see section 4.1.3
+	uuid[6] = uuid[6]&^0xf0 | 0x40
+	return fmt.Sprintf("%x-%x-%x-%x-%x", uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:])
 }

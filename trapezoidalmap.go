@@ -13,10 +13,10 @@ func ConstructMap(width, height int, segments []*Segment) []*Trapezoid {
 
 	// start T and D with a nil trapezoid (R?)
 	t0 := &Trapezoid{}
-	trapMap := []*Trapezoid{t0}
 	// interlinking
 	root := &Node{T: t0, Type: Leaf}
 	t0.Node = root
+	trapMap := []*Trapezoid{t0}
 
 	for len(segments) > 0 {
 		r := random(len(segments))
@@ -26,17 +26,20 @@ func ConstructMap(width, height int, segments []*Segment) []*Trapezoid {
 		// find the set of trapezoids in T intersected by seg
 		intersectedTraps := followSegment(root, seg)
 
+		fmt.Printf("Segment: %d\n", seg.Index)
+		fmt.Printf("Intersected: %d\n", len(intersectedTraps))
+
 		// simple case: the segment is completely contained in trapezoid 0
 		if len(intersectedTraps) == 1 {
 
 			d := intersectedTraps[0]
-			trapMap = removeTrap(trapMap, 0)
+			trapMap = removeTrap(trapMap, d)
 
 			// set end segments and points
-			A := &Trapezoid{Top: d.Top, Bottom: d.Bottom, Leftp: d.Leftp, Rightp: seg.P}
-			C := &Trapezoid{Top: d.Top, Bottom: seg, Leftp: seg.P, Rightp: seg.Q}
-			D := &Trapezoid{Top: seg, Bottom: d.Bottom, Leftp: seg.P, Rightp: seg.Q}
-			B := &Trapezoid{Top: d.Top, Bottom: d.Bottom, Leftp: seg.Q, Rightp: d.Rightp}
+			A := &Trapezoid{Top: d.Top, Bottom: d.Bottom, Leftp: d.Leftp, Rightp: seg.P, UUID: newUUID()}
+			C := &Trapezoid{Top: d.Top, Bottom: seg, Leftp: seg.P, Rightp: seg.Q, UUID: newUUID()}
+			D := &Trapezoid{Top: seg, Bottom: d.Bottom, Leftp: seg.P, Rightp: seg.Q, UUID: newUUID()}
+			B := &Trapezoid{Top: d.Top, Bottom: d.Bottom, Leftp: seg.Q, Rightp: d.Rightp, UUID: newUUID()}
 
 			// set neighbors: UL, LL, UR, LR
 			A.setNeighbors(d.UpperLeft, d.LowerLeft, C, D)
@@ -60,6 +63,9 @@ func ConstructMap(width, height int, segments []*Segment) []*Trapezoid {
 				d.LowerRight.UpperLeft = B
 				d.LowerRight.LowerLeft = B
 			}
+			// add to trapezoidal map
+			trapMap = append(trapMap, A, B, C, D)
+
 			// update the tree D by replacing the leaf for d by a little
 			// tree with four leaves.
 			subTree := d.Node
@@ -79,13 +85,12 @@ func ConstructMap(width, height int, segments []*Segment) []*Trapezoid {
 			// much more complicated case: seg intersects two or more trapezoids.
 			for i := 0; i < len(intersectedTraps); i++ {
 				d := intersectedTraps[i]
-				//fmt.Printf("i: %d, len(intersectedTraps): %d\n", i, len(intersectedTraps))
-				trapMap = removeTrap(trapMap, i)
+				trapMap = removeTrap(trapMap, d)
 
 				if i == 0 {
-					A := &Trapezoid{Top: d.Top, Bottom: d.Bottom, Leftp: d.Leftp, Rightp: seg.P}
-					B := &Trapezoid{Top: d.Top, Bottom: seg, Leftp: seg.P, Rightp: d.Rightp}
-					C := &Trapezoid{Top: seg, Bottom: d.Bottom, Leftp: seg.P, Rightp: d.Rightp}
+					A := &Trapezoid{Top: d.Top, Bottom: d.Bottom, Leftp: d.Leftp, Rightp: seg.P, UUID: newUUID()}
+					B := &Trapezoid{Top: d.Top, Bottom: seg, Leftp: seg.P, Rightp: d.Rightp, UUID: newUUID()}
+					C := &Trapezoid{Top: seg, Bottom: d.Bottom, Leftp: seg.P, Rightp: d.Rightp, UUID: newUUID()}
 					A.setNeighbors(d.UpperLeft, d.LowerLeft, B, C)
 					B.setNeighbors(A, A, nil, nil)
 					C.setNeighbors(A, A, nil, nil)
@@ -107,6 +112,7 @@ func ConstructMap(width, height int, segments []*Segment) []*Trapezoid {
 					// update the tree D by replacing the leaf for d by a little
 					// tree with four leaves.
 					subTree := d.Node
+					fmt.Printf("BUG here:  subTree: %v\n", subTree)
 					subTree.P = seg.P
 					subTree.Type = XNode
 
@@ -120,9 +126,9 @@ func ConstructMap(width, height int, segments []*Segment) []*Trapezoid {
 					assertNeighbors(trapMap)
 
 				} else if i == len(intersectedTraps)-1 {
-					B := &Trapezoid{Top: d.Top, Bottom: seg, Leftp: d.Leftp, Rightp: seg.Q}
-					C := &Trapezoid{Top: seg, Bottom: d.Bottom, Leftp: d.Leftp, Rightp: seg.Q}
-					A := &Trapezoid{Top: d.Top, Bottom: d.Bottom, Leftp: seg.Q, Rightp: d.Rightp}
+					B := &Trapezoid{Top: d.Top, Bottom: seg, Leftp: d.Leftp, Rightp: seg.Q, UUID: newUUID()}
+					C := &Trapezoid{Top: seg, Bottom: d.Bottom, Leftp: d.Leftp, Rightp: seg.Q, UUID: newUUID()}
+					A := &Trapezoid{Top: d.Top, Bottom: d.Bottom, Leftp: seg.Q, Rightp: d.Rightp, UUID: newUUID()}
 					B.setNeighbors(prevUpper, prevUpper, A, A)
 					C.setNeighbors(prevLower, prevLower, A, A)
 					A.setNeighbors(B, C, d.UpperRight, d.LowerRight)
@@ -159,8 +165,8 @@ func ConstructMap(width, height int, segments []*Segment) []*Trapezoid {
 					assertNeighbors(trapMap)
 				} else {
 
-					A := &Trapezoid{Top: d.Top, Bottom: seg, Leftp: d.Leftp, Rightp: d.Rightp}
-					B := &Trapezoid{Top: seg, Bottom: d.Bottom, Leftp: d.Leftp, Rightp: d.Rightp}
+					A := &Trapezoid{Top: d.Top, Bottom: seg, Leftp: d.Leftp, Rightp: d.Rightp, UUID: newUUID()}
+					B := &Trapezoid{Top: seg, Bottom: d.Bottom, Leftp: d.Leftp, Rightp: d.Rightp, UUID: newUUID()}
 					A.setNeighbors(prevUpper, prevUpper, nil, nil)
 					B.setNeighbors(prevLower, prevLower, nil, nil)
 
@@ -207,14 +213,21 @@ func removeSeg(segs []*Segment, index int) []*Segment {
 }
 
 // correct: no generics
-func removeTrap(traps []*Trapezoid, index int) []*Trapezoid {
+func removeTrap(traps []*Trapezoid, t *Trapezoid) []*Trapezoid {
 
-	fmt.Printf("foo: %d, len(traps): %d\n", index, len(traps))
+	// find the item to remove
+	for i := range traps {
 
-	copy(traps[index:], traps[index+1:])
-	// This is a slice of pointers, this allows GC
-	traps[len(traps)-1] = nil
-	return traps[:len(traps)-1]
+		if traps[i].equals(t) {
+			fmt.Printf("Removing trap at index: %d\n", i)
+			copy(traps[i:], traps[i+1:])
+			// This is a slice of pointers, this allows GC
+			traps[len(traps)-1] = nil
+			return traps[:len(traps)-1]
+		}
+	}
+	fmt.Printf("Removing NO traps!\n")
+	return traps
 }
 
 // followSegment searches for and returns the slice of trapezoids intersected
@@ -273,7 +286,7 @@ func mergeTrapezoids(newTrapezoids []*Trapezoid, seg *Segment) []*Trapezoid {
 				} else {
 					next.Node.Parent.Right = t.Node
 				}
-				newTrapezoids = removeTrap(newTrapezoids, nextI)
+				newTrapezoids = removeTrap(newTrapezoids, newTrapezoids[nextI])
 				break
 			} else {
 				t.Merged = true
