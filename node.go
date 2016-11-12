@@ -94,8 +94,8 @@ func (n *Node) setRightTreeToSeg(seg *Segment, leftTrap *Trapezoid, rightTrap *T
 func (n *Node) setLeftTreeToSeg(seg *Segment, leftTrap *Trapezoid, rightTrap *Trapezoid) {
 
 	n.Left = &Node{S: seg, Parent: n, Type: YNode}
-	n.Left.Left = &Node{T: leftTrap, Parent: n.Right, Type: Leaf}
-	n.Left.Right = &Node{T: rightTrap, Parent: n.Right, Type: Leaf}
+	n.Left.Left = &Node{T: leftTrap, Parent: n.Left, Type: Leaf}
+	n.Left.Right = &Node{T: rightTrap, Parent: n.Left, Type: Leaf}
 	// interlink with the search structure
 	leftTrap.Node = n.Left.Left
 	rightTrap.Node = n.Left.Right

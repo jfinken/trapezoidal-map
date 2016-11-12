@@ -1,7 +1,7 @@
 package trapezoidalmap
 
 import (
-	"fmt"
+	"log"
 	"math/rand"
 	"time"
 )
@@ -26,8 +26,8 @@ func ConstructMap(width, height int, segments []*Segment) []*Trapezoid {
 		// find the set of trapezoids in T intersected by seg
 		intersectedTraps := followSegment(root, seg)
 
-		fmt.Printf("Segment: %d\n", seg.Index)
-		fmt.Printf("Intersected: %d\n", len(intersectedTraps))
+		log.Printf("Segment: %d\n", seg.Index)
+		log.Printf("Intersected: %d\n", len(intersectedTraps))
 
 		// simple case: the segment is completely contained in trapezoid 0
 		if len(intersectedTraps) == 1 {
@@ -85,7 +85,7 @@ func ConstructMap(width, height int, segments []*Segment) []*Trapezoid {
 			// much more complicated case: seg intersects two or more trapezoids.
 			for i := 0; i < len(intersectedTraps); i++ {
 				d := intersectedTraps[i]
-				fmt.Printf("d: %v\n", d)
+				//fmt.Printf("d: %v\n", d)
 				trapMap = removeTrap(trapMap, d)
 
 				if i == 0 {
@@ -222,7 +222,7 @@ func removeTrap(traps []*Trapezoid, t *Trapezoid) []*Trapezoid {
 			return traps[:len(traps)-1]
 		}
 	}
-	fmt.Printf("Removing NO traps!\n")
+	log.Printf("Removing NO traps!\n")
 	return traps
 }
 
