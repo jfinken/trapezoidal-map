@@ -68,15 +68,15 @@ func ConstructMap(width, height int, segments []*Segment) []*Trapezoid {
 
 			// update the tree D by replacing the leaf for d by a little
 			// tree with four leaves.
-			subTree := d.Node
-			subTree.P = seg.P
-			subTree.Type = XNode
+			d.Node.P = seg.P
+			d.Node.Type = XNode
 
 			// set left sub-tree and interlink it with the trapezoid
-			subTree.setLeftTree(A)
+			d.Node.setLeftTree(A)
 
 			// set right sub-tree
-			subTree.setRightTreeToPoint(seg.Q, B, seg, C, D)
+			d.Node.setRightTreeToPoint(seg.Q, B, seg, C, D)
+
 		} else {
 			newTrapezoids := []*Trapezoid{}
 			var prevUpper *Trapezoid
@@ -85,6 +85,7 @@ func ConstructMap(width, height int, segments []*Segment) []*Trapezoid {
 			// much more complicated case: seg intersects two or more trapezoids.
 			for i := 0; i < len(intersectedTraps); i++ {
 				d := intersectedTraps[i]
+				fmt.Printf("d: %v\n", d)
 				trapMap = removeTrap(trapMap, d)
 
 				if i == 0 {
@@ -111,16 +112,14 @@ func ConstructMap(width, height int, segments []*Segment) []*Trapezoid {
 
 					// update the tree D by replacing the leaf for d by a little
 					// tree with four leaves.
-					subTree := d.Node
-					fmt.Printf("BUG here:  subTree: %v\n", subTree)
-					subTree.P = seg.P
-					subTree.Type = XNode
+					d.Node.P = seg.P
+					d.Node.Type = XNode
 
 					// set left sub-tree and interlink it with the trapezoid
-					subTree.setLeftTree(A)
+					d.Node.setLeftTree(A)
 
 					// set right sub-tree
-					subTree.setRightTreeToSeg(seg, B, C)
+					d.Node.setRightTreeToSeg(seg, B, C)
 
 					// for each trapezoid in the map, check trap's neighbors
 					assertNeighbors(trapMap)
@@ -151,15 +150,14 @@ func ConstructMap(width, height int, segments []*Segment) []*Trapezoid {
 
 					// update the tree D by replacing the leaf for d by a little
 					// tree with four leaves.
-					subTree := d.Node
-					subTree.P = seg.Q
-					subTree.Type = XNode
+					d.Node.P = seg.Q
+					d.Node.Type = XNode
 
 					// set right sub-tree and interlink it with the trapezoid
-					subTree.setRightTree(A)
+					d.Node.setRightTree(A)
 
 					// set left sub-tree
-					subTree.setLeftTreeToSeg(seg, B, C)
+					d.Node.setLeftTreeToSeg(seg, B, C)
 
 					// for each trapezoid in the map, check trap's neighbors
 					assertNeighbors(trapMap)
@@ -180,15 +178,14 @@ func ConstructMap(width, height int, segments []*Segment) []*Trapezoid {
 					newTrapezoids = append(newTrapezoids, A, B)
 					// update the tree D by replacing the leaf for d by a little
 					// tree with four leaves.
-					subTree := d.Node
-					subTree.S = seg
-					subTree.Type = YNode
+					d.Node.S = seg
+					d.Node.Type = YNode
 
 					// set left sub-tree and interlink it with the trapezoid
-					subTree.setLeftTree(A)
+					d.Node.setLeftTree(A)
 
 					// set right sub-tree
-					subTree.setRightTree(B)
+					d.Node.setRightTree(B)
 
 					// for each trapezoid in the map, check trap's neighbors
 					assertNeighbors(trapMap)
@@ -219,7 +216,6 @@ func removeTrap(traps []*Trapezoid, t *Trapezoid) []*Trapezoid {
 	for i := range traps {
 
 		if traps[i].equals(t) {
-			fmt.Printf("Removing trap at index: %d\n", i)
 			copy(traps[i:], traps[i+1:])
 			// This is a slice of pointers, this allows GC
 			traps[len(traps)-1] = nil

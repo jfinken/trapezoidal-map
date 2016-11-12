@@ -70,16 +70,25 @@ func (n *Node) setRightTreeToPoint(rightPt *Point, rightTrap *Trapezoid, leftSeg
 	// Ref: Figure 6.7, page 129 of http://www.cs.uu.nl/geobook/
 	n.Right = &Node{P: rightPt, Parent: n, Type: XNode}
 	n.Right.Right = &Node{T: rightTrap, Parent: n.Right, Type: Leaf}
+	// interlink with the search structure
+	rightTrap.Node = n.Right.Right
 
 	n.Right.Left = &Node{S: leftSeg, Parent: n.Right, Type: YNode}
+
+	// interlink with the search structure
 	n.Right.Left.Left = &Node{T: leftSubTrapLeft, Parent: n.Right.Left, Type: Leaf}
+	leftSubTrapLeft.Node = n.Right.Left.Left
 	n.Right.Left.Right = &Node{T: leftSubTrapRight, Parent: n.Right.Left, Type: Leaf}
+	leftSubTrapRight.Node = n.Right.Left.Right
 }
 func (n *Node) setRightTreeToSeg(seg *Segment, leftTrap *Trapezoid, rightTrap *Trapezoid) {
 
 	n.Right = &Node{S: seg, Parent: n, Type: YNode}
 	n.Right.Left = &Node{T: leftTrap, Parent: n.Right, Type: Leaf}
 	n.Right.Right = &Node{T: rightTrap, Parent: n.Right, Type: Leaf}
+	// interlink with the search structure
+	leftTrap.Node = n.Right.Left
+	rightTrap.Node = n.Right.Right
 }
 
 func (n *Node) setLeftTreeToSeg(seg *Segment, leftTrap *Trapezoid, rightTrap *Trapezoid) {
@@ -87,6 +96,9 @@ func (n *Node) setLeftTreeToSeg(seg *Segment, leftTrap *Trapezoid, rightTrap *Tr
 	n.Left = &Node{S: seg, Parent: n, Type: YNode}
 	n.Left.Left = &Node{T: leftTrap, Parent: n.Right, Type: Leaf}
 	n.Left.Right = &Node{T: rightTrap, Parent: n.Right, Type: Leaf}
+	// interlink with the search structure
+	leftTrap.Node = n.Left.Left
+	rightTrap.Node = n.Left.Right
 }
 func (n *Node) equals(other *Node) bool {
 
